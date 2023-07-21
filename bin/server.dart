@@ -149,7 +149,8 @@ Future<Response> _statsHandler(Request req) async {
     final stats = await jiraStats.getTotalEstimationByJql(
       map['jql'],
       storyPointEstimateField: map['field'],
-      frequency: map['frequency'] ?? SamplingFrequency.eachWeek,
+      frequency: SerializableSamplingFrequency.fromMap(
+          map['frequency'] ?? SamplingFrequency.eachWeek.toString()),
       weeksAgoCount: map['weeksAgoCount'] ?? 4,
     );
 
