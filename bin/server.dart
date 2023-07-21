@@ -7,10 +7,10 @@ import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 final _router = Router()
-  ..get('/check-credentials', _checkCredentialsHandler)
-  ..get('/validate-jql', _validateQjlHandler)
-  ..get('/check-story-points-field', _checkStoryPointsField)
-  ..get('/stats', _statsHandler);
+  ..post('/check-credentials', _checkCredentialsHandler)
+  ..post('/validate-jql', _validateQjlHandler)
+  ..post('/check-story-points-field', _checkStoryPointsField)
+  ..post('/stats', _statsHandler);
 
 Future<Response> _checkCredentialsHandler(Request req) async {
   try {
