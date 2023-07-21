@@ -172,15 +172,6 @@ Future<Response> _statsHandler(Request req) async {
   }
 }
 
-Response _rootHandler(Request req) {
-  return Response.ok('Hello, World!\n');
-}
-
-Response _echoHandler(Request request) {
-  final message = request.params['message'];
-  return Response.ok('$message\n');
-}
-
 void main(List<String> args) async {
   // Use any available host or container IP (usually `0.0.0.0`).
   final ip = InternetAddress.anyIPv4;
@@ -192,4 +183,28 @@ void main(List<String> args) async {
   final port = int.parse(Platform.environment['PORT'] ?? '8080');
   final server = await serve(handler, ip, port);
   print('Server listening on port ${server.port}');
+}
+
+// CORS middleware to allow requests from all origins (*).
+Middleware corsMiddleware = (Handler innerHandler) {
+  return (Request request) async {
+    // Add CORS headers to the response
+    if (request.method == 'OPTIONS') {
+      // Handle preflight requests
+      return Response.ok(null, headers: _createCorsHeaders());
+    } else {
+      // Handle standard requests
+      var response = await innerHandler(request);
+      return response.change(headers: _createCorsHeaders());
+    }
+  };
+};
+
+// Helper function to create CORS headers
+Map<String, String> _createCorsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Origin, Content-Type, X-Auth-Token',
+  };
 }
