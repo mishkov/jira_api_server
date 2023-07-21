@@ -177,7 +177,10 @@ void main(List<String> args) async {
   final ip = InternetAddress.anyIPv4;
 
   // Configure a pipeline that logs requests.
-  final handler = Pipeline().addMiddleware(logRequests()).addHandler(_router);
+  final handler = Pipeline()
+      .addMiddleware(corsMiddleware) // Add the CORS middleware here
+      .addMiddleware(logRequests())
+      .addHandler(_router);
 
   // For running in containers, we respect the PORT environment variable.
   final port = int.parse(Platform.environment['PORT'] ?? '8080');
