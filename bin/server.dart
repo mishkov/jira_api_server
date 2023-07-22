@@ -185,6 +185,25 @@ void main(List<String> args) async {
 
   // For running in containers, we respect the PORT environment variable.
   final port = int.parse(Platform.environment['PORT'] ?? '8080');
-  final server = await serve(handler, ip, port);
+  final server = await serve(
+    handler,
+    ip,
+    port,
+    securityContext: getSecurityContext(),
+  );
   print('Server listening on port ${server.port}');
+}
+
+SecurityContext getSecurityContext() {
+  // Bind with a secure HTTPS connection
+  final chain = Platform.script
+      .resolve(String.fromEnvironment('PATH_TO_CERTIFICATE'))
+      .toFilePath();
+  final key = Platform.script
+      .resolve(String.fromEnvironment('PATH_TO_KEY'))
+      .toFilePath();
+
+  return SecurityContext()
+    ..useCertificateChain(chain)
+    ..usePrivateKey(key, password: 'dartdart');
 }
