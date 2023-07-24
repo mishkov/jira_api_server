@@ -15,11 +15,17 @@ final _router = Router()
 
 final errorLogs = File('logs/error_log.txt');
 
-Future<void> _logError(error, {required Request request}) async {
+Future<void> _logError(
+  error, {
+  required Request request,
+  required String requestBody,
+}) async {
+  request.change();
+
   await errorLogs.writeAsString(
     'ERROR:${DateTime.now()}:\t${request.method} ${request.url} \n'
     'body of request:\n'
-    '${request.readAsString()}\n'
+    '$requestBody\n'
     'error:\n'
     '$error',
     mode: FileMode.append,
@@ -27,9 +33,8 @@ Future<void> _logError(error, {required Request request}) async {
 }
 
 Future<Response> _checkCredentialsHandler(Request req) async {
+  final body = await req.readAsString();
   try {
-    final body = await req.readAsString();
-
     final map = jsonDecode(body);
 
     final jiraStats = JiraStats(
@@ -52,15 +57,14 @@ Future<Response> _checkCredentialsHandler(Request req) async {
       HttpHeaders.contentTypeHeader: 'application/json',
     });
   } catch (e, stackTrace) {
-    await _logError(e, request: req);
+    await _logError(e, request: req, requestBody: body);
     return Response.internalServerError(body: '$e\n$stackTrace');
   }
 }
 
 Future<Response> _validateQjlHandler(Request req) async {
+  final body = await req.readAsString();
   try {
-    final body = await req.readAsString();
-
     final map = jsonDecode(body);
 
     final jiraStats = JiraStats(
@@ -98,7 +102,7 @@ Future<Response> _validateQjlHandler(Request req) async {
       HttpHeaders.contentTypeHeader: 'application/json',
     });
   } catch (e, stackTrace) {
-    await _logError(e, request: req);
+    await _logError(e, request: req, requestBody: body);
     return Response.internalServerError(body: '$e\n$stackTrace');
   }
 }
@@ -108,9 +112,8 @@ Future<Response> _checkStoryPointsField(Request req) async {
     HttpHeaders.contentTypeHeader: 'application/json',
   };
 
+  final body = await req.readAsString();
   try {
-    final body = await req.readAsString();
-
     final map = jsonDecode(body);
 
     final jiraStats = JiraStats(
@@ -140,7 +143,7 @@ Future<Response> _checkStoryPointsField(Request req) async {
 
     return Response(400, body: jsonEncode(response), headers: headers);
   } catch (e, stackTrace) {
-    await _logError(e, request: req);
+    await _logError(e, request: req, requestBody: body);
     return Response.internalServerError(body: '$e\n$stackTrace');
   }
 }
@@ -150,9 +153,8 @@ Future<Response> _statsHandler(Request req) async {
     HttpHeaders.contentTypeHeader: 'application/json',
   };
 
+  final body = await req.readAsString();
   try {
-    final body = await req.readAsString();
-
     final map = jsonDecode(body);
 
     final jiraStats = JiraStats(
@@ -185,7 +187,7 @@ Future<Response> _statsHandler(Request req) async {
 
     return Response(400, body: jsonEncode(response), headers: headers);
   } catch (e, stackTrace) {
-    await _logError(e, request: req);
+    await _logError(e, request: req, requestBody: body);
     return Response.internalServerError(body: '$e\n$stackTrace');
   }
 }
@@ -210,12 +212,12 @@ void main(List<String> args) async {
     logger: (message, isError) {
       if (isError) {
         logs.writeAsStringSync(
-          'ERROR:$message',
+          'ERROR:$message\n',
           mode: FileMode.append,
         );
       } else {
         logs.writeAsStringSync(
-          'INFO:$message',
+          'INFO:$message\n',
           mode: FileMode.append,
         );
       }
