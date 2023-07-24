@@ -230,7 +230,7 @@ void main(List<String> args) async {
     handler,
     ip,
     port,
-    // securityContext: getSecurityContext(),
+    securityContext: getSecurityContext(),
   );
   print('Server listening on port ${server.port}');
 }
