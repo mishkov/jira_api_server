@@ -184,7 +184,7 @@ void main(List<String> args) async {
       .addHandler(_router);
 
   // For running in containers, we respect the PORT environment variable.
-  final port = int.parse(Platform.environment['PORT'] ?? '8080');
+  final port = int.parse(Platform.environment['PORT'] ?? '443');
   final server = await serve(
     handler,
     ip,
@@ -195,15 +195,8 @@ void main(List<String> args) async {
 }
 
 SecurityContext getSecurityContext() {
-  // Bind with a secure HTTPS connection
-  final chain = Platform.script
-      .resolve(String.fromEnvironment('PATH_TO_CERTIFICATE'))
-      .toFilePath();
-  final key = Platform.script
-      .resolve(String.fromEnvironment('PATH_TO_KEY'))
-      .toFilePath();
-
   return SecurityContext()
-    ..useCertificateChain(chain)
-    ..usePrivateKey(key, password: 'dartdart');
+    ..useCertificateChain(
+        '/etc/letsencrypt/live/jira.mishkov.space/fullchain.pem')
+    ..usePrivateKey('/etc/letsencrypt/live/jira.mishkov.space/privkey.pem');
 }
