@@ -13,6 +13,19 @@ final _router = Router()
   ..post('/check-story-points-field', _checkStoryPointsField)
   ..post('/stats', _statsHandler);
 
+final errorLogs = File('logs/error_log.txt');
+
+Future<void> _logError(error, {required Request request}) async {
+  await errorLogs.writeAsString(
+    'ERROR:${DateTime.now()}:\t${request.method} ${request.url} \n'
+    'body of request:\n'
+    '${request.readAsString()}\n'
+    'error:\n'
+    '$error',
+    mode: FileMode.append,
+  );
+}
+
 Future<Response> _checkCredentialsHandler(Request req) async {
   try {
     final body = await req.readAsString();
@@ -39,6 +52,7 @@ Future<Response> _checkCredentialsHandler(Request req) async {
       HttpHeaders.contentTypeHeader: 'application/json',
     });
   } catch (e, stackTrace) {
+    await _logError(e, request: req);
     return Response.internalServerError(body: '$e\n$stackTrace');
   }
 }
@@ -84,6 +98,7 @@ Future<Response> _validateQjlHandler(Request req) async {
       HttpHeaders.contentTypeHeader: 'application/json',
     });
   } catch (e, stackTrace) {
+    await _logError(e, request: req);
     return Response.internalServerError(body: '$e\n$stackTrace');
   }
 }
@@ -125,6 +140,7 @@ Future<Response> _checkStoryPointsField(Request req) async {
 
     return Response(400, body: jsonEncode(response), headers: headers);
   } catch (e, stackTrace) {
+    await _logError(e, request: req);
     return Response.internalServerError(body: '$e\n$stackTrace');
   }
 }
@@ -169,6 +185,7 @@ Future<Response> _statsHandler(Request req) async {
 
     return Response(400, body: jsonEncode(response), headers: headers);
   } catch (e, stackTrace) {
+    await _logError(e, request: req);
     return Response.internalServerError(body: '$e\n$stackTrace');
   }
 }
@@ -177,11 +194,33 @@ void main(List<String> args) async {
   // Use any available host or container IP (usually `0.0.0.0`).
   final ip = InternetAddress.anyIPv4;
 
+  final logs = File('logs/log.txt');
+
+  if (!logs.existsSync()) {
+    logs.createSync(recursive: true);
+  }
+
+  if (!errorLogs.existsSync()) {
+    errorLogs.createSync(recursive: true);
+  }
+
   // Configure a pipeline that logs requests.
-  final handler = Pipeline()
-      .addMiddleware(corsHeaders())
-      .addMiddleware(logRequests())
-      .addHandler(_router);
+  final handler =
+      Pipeline().addMiddleware(corsHeaders()).addMiddleware(logRequests(
+    logger: (message, isError) {
+      if (isError) {
+        logs.writeAsStringSync(
+          'ERROR:$message',
+          mode: FileMode.append,
+        );
+      } else {
+        logs.writeAsStringSync(
+          'INFO:$message',
+          mode: FileMode.append,
+        );
+      }
+    },
+  )).addHandler(_router);
 
   // For running in containers, we respect the PORT environment variable.
   final port = int.parse(Platform.environment['PORT'] ?? '443');
@@ -189,7 +228,7 @@ void main(List<String> args) async {
     handler,
     ip,
     port,
-    securityContext: getSecurityContext(),
+    // securityContext: getSecurityContext(),
   );
   print('Server listening on port ${server.port}');
 }
