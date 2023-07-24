@@ -4,3 +4,5 @@
 
 # executable
 bin/server
+
+logs/*
